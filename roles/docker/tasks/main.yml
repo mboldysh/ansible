@@ -1,0 +1,54 @@
+---
+- name: ensure Docker dependencies are installed
+  apt:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - 'apt-transport-https'
+    - 'ca-certificates'
+    - 'software-properties-common'
+  become: true
+ 
+- name: add Docker’s official GPG key
+  apt_key:
+    url: '{{ docker_gpg_url }}'
+    id: '{{ docker_gpg_fingerprint }}'
+    state: present
+  register: 'add_repository_key'
+  ignore_errors: true
+  become: true
+
+- name: add Docker repository
+  apt_repository:
+    repo: '{{ docker_apt_repository }}'
+    state: present
+    update_cache: yes
+  become: true
+
+- name: install Docker
+  apt:
+    name: '{{ docker_version }}'
+    state: present
+  become: true
+
+- name: enable Docker systemd service
+  service:
+    name: docker
+    state: started    
+    enabled: yes
+  become: true
+
+- name: 'add users to docker group'
+  user:
+    name: '{{ item }}'
+    groups: 'docker'
+    append: 'yes'
+  with_items: '{{ docker_group_members }}'
+  when: 'docker_group_members is defined'
+  become: true
+    
+- name: install docker sdk for python
+  pip:
+      name: 'docker'
+  become: true
+    

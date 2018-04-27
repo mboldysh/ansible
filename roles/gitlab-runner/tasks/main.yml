@@ -1,0 +1,25 @@
+---
+
+- name: run gitlab runner container
+  docker_container:
+    name: gitlab-runner
+    image: gitlab/gitlab-runner:{{ gitlab_runner_tag }}
+    volumes: 
+      - /srv/gitlab-runner/config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    state: started
+    restart_policy: always
+  become: true
+
+- name: register gitlab runner
+  shell: >
+    docker exec --tty
+    gitlab-runner
+    gitlab-runner register
+    --non-interactive
+    --url={{ gitlab_url }}
+    --registration-token={{ registration_token }}
+    --name={{ runner_name }} 
+    --executor=docker
+    --docker-image={{ runner_default_image }}
+  become: true
